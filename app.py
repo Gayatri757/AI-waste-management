@@ -35,46 +35,58 @@ def set_bg(image_file):
 set_bg("background.png")
 
 # -------------------------------
-# Custom CSS
+# Dark Overlay + Glass UI
 # -------------------------------
 st.markdown("""
 <style>
+.stApp {
+    background-image: url("background.png");
+    background-size: cover;
+    background-position: center;
+}
+
+/* Dark overlay */
+.stApp::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.55);
+    z-index: -1;
+}
+
+/* Glass container */
+.glass {
+    background: rgba(255,255,255,0.12);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-radius: 20px;
+    padding: 40px;
+    box-shadow: 0 0 40px rgba(0,0,0,0.4);
+}
+
+/* Title */
 .title {
-    font-size: 48px;
-    font-weight: bold;
-    color: #ffffff;
-    text-shadow: 2px 2px 8px black;
+    font-size: 50px;
+    font-weight: 800;
+    color: white;
 }
 .subtitle {
+    color: #d1fae5;
     font-size: 18px;
-    color: #e0f2f1;
 }
-.card {
-    background: rgba(255,255,255,0.9);
-    padding: 25px;
-    border-radius: 20px;
-    box-shadow: 0px 10px 25px rgba(0,0,0,0.2);
-}
-.badge {
-    padding: 8px 16px;
-    border-radius: 20px;
+
+/* Buttons */
+.stButton>button {
+    background: linear-gradient(135deg,#10b981,#059669);
+    color:white;
+    border:none;
+    border-radius: 10px;
+    padding: 12px 25px;
     font-weight: bold;
-    color: white;
-    display: inline-block;
 }
-.hazard { background:#e63946; }
-.recycle { background:#2a9d8f; }
-.recovery { background:#f4a261; }
-.landfill { background:#6c757d; }
 </style>
 """, unsafe_allow_html=True)
 
-# -------------------------------
-# Header
-# -------------------------------
-st.markdown("<div class='title'>♻ Smart Waste AI</div>", unsafe_allow_html=True)
-st.markdown("<div class='subtitle'>AI-powered waste identification for Smart Cities</div>", unsafe_allow_html=True)
-st.markdown("---")
 
 # -------------------------------
 # Load Model
@@ -110,19 +122,25 @@ waste_rules = {
 # -------------------------------
 # Layout
 # -------------------------------
-left, right = st.columns([1,1])
+st.markdown("<div class='glass'>", unsafe_allow_html=True)
 
-with left:
-    st.markdown("## 📤 Upload Waste Image")
+st.markdown("<div class='title'>♻ Smart Waste AI</div>", unsafe_allow_html=True)
+st.markdown("<div class='subtitle'>AI-powered waste classification for Smart Cities</div>", unsafe_allow_html=True)
+
+st.markdown("<br>", unsafe_allow_html=True)
+
+col1, col2 = st.columns(2)
+
+with col1:
+    st.subheader("📤 Upload Waste Image")
     uploaded = st.file_uploader("", type=["jpg","png","jpeg"])
 
-with right:
-    st.markdown("## 🧠 AI Prediction")
+with col2:
+    st.subheader("🧠 AI Prediction")
 
     if uploaded:
         img = Image.open(uploaded).convert("RGB")
         img_resized = img.resize((224,224))
-
         arr = np.expand_dims(np.array(img_resized)/255.0, axis=0)
 
         pred = model.predict(arr)
@@ -132,18 +150,14 @@ with right:
         label = class_names[idx]
         rule = waste_rules[label]
 
-        st.markdown("<div class='card'>", unsafe_allow_html=True)
-        st.image(img, width=300)
-
-        st.markdown(f"### **{label.upper()}**")
-        st.progress(confidence/100)
-        st.write(f"Confidence: **{confidence:.2f}%**")
-
-        st.markdown(f"<span class='badge {rule['badge']}'>{rule['type']}</span>", unsafe_allow_html=True)
-        st.write(rule["message"])
-        st.success(f"Action: {rule['action']}")
-
-        st.markdown("</div>", unsafe_allow_html=True)
+        st.image(img, width=250)
+        st.success(f"**{label.upper()}**  ({confidence:.2f}%)")
+        st.info(rule["message"])
+        st.warning(f"Action: {rule['action']}")
 
     else:
-        st.info("Upload an image to start AI waste classification")
+        st.info("Upload an image to get AI result")
+
+st.markdown("</div>", unsafe_allow_html=True)
+
+
