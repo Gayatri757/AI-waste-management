@@ -2,10 +2,10 @@ import streamlit as st
 import tensorflow as tf
 import numpy as np
 from PIL import Image
-import cv2
+import os
 
 # -------------------------------
-# UI SETTINGS
+# PAGE CONFIG
 # -------------------------------
 st.set_page_config(page_title="Smart Waste AI", layout="centered")
 
@@ -35,19 +35,22 @@ st.write("Upload a waste image to get disposal & safety recommendation")
 # -------------------------------
 @st.cache_resource
 def load_model():
-    model = tf.keras.models.load_model("waste_classifier.h5")
+    MODEL_PATH = os.path.join(os.path.dirname(__file__), "waste_classifier_mobilenet.h5")
+    model = tf.keras.models.load_model(MODEL_PATH)
     return model
 
 model = load_model()
 
 # -------------------------------
-# CLASS LABELS (same order used during training)
+# CLASS LABELS (same order used in training)
 # -------------------------------
-class_names = ['battery','biological','cardboard','clothes','glass',
-               'metal','paper','plastic','shoes','trash']
+class_names = [
+    'battery','biological','cardboard','clothes','glass',
+    'metal','paper','plastic','shoes','trash'
+]
 
 # -------------------------------
-# KNOWLEDGE BASE
+# KNOWLEDGE BASE (Decision Engine)
 # -------------------------------
 waste_rules = {
     "battery": {"type":"Hazardous","message":"⚠ Battery is hazardous. Inform supervisor.","action":"Send to hazardous waste bin"},
@@ -70,13 +73,14 @@ uploaded = st.file_uploader("Upload waste image", type=["jpg","png","jpeg"])
 if uploaded:
     img = Image.open(uploaded).convert("RGB")
     img = img.resize((224,224))
-    img_array = np.array(img)/255.0
+
+    img_array = np.array(img) / 255.0
     img_array = np.expand_dims(img_array, axis=0)
 
     pred = model.predict(img_array)
     class_index = np.argmax(pred)
     predicted_class = class_names[class_index]
-    confidence = np.max(pred)*100
+    confidence = np.max(pred) * 100
 
     rule = waste_rules[predicted_class]
 
@@ -88,7 +92,7 @@ if uploaded:
     st.image(img, caption="Uploaded Waste Image", width=300)
     st.write(f"### 🧠 Predicted Waste: **{predicted_class.upper()}**")
     st.write(f"📊 Confidence: **{confidence:.2f}%**")
-    st.write(f"⚙ Type: **{rule['type']}**")
+    st.write(f"⚙ Category: **{rule['type']}**")
     st.write(rule["message"])
     st.success(f"Recommended Action: {rule['action']}")
 
