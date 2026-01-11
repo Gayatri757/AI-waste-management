@@ -2,6 +2,7 @@ import streamlit as st
 import tensorflow as tf
 import numpy as np
 from PIL import Image
+import os
 
 # ---------------------------------------
 # Page Config
@@ -126,7 +127,7 @@ st.markdown("<div class='subtitle'>AI-powered waste classification for Smart Cit
 col1, col2 = st.columns(2)
 
 with col1:
-    uploaded = st.file_uploader("Upload waste image", type=["jpg","png","jpeg"])
+    uploaded = st.file_uploader("📤 Upload Waste Image", type=["jpg","png","jpeg"])
 
 with col2:
     if uploaded:
@@ -169,6 +170,14 @@ with col2:
             f"<div class='result'>🗂 {label.upper()} ({confidence:.2f}%)<br>🚮 {action}</div>",
             unsafe_allow_html=True
         )
+
+        # Play optional success audio safely
+        audio_file = "success.mp3"  # make sure this file is in same folder as app.py
+        if os.path.exists(audio_file):
+            st.audio(audio_file)
+        else:
+            st.warning("Audio file not found — skipping sound")
+
     else:
         st.info("Upload an image to get waste classification")
 
